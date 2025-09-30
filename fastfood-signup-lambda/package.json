@@ -1,0 +1,24 @@
+{
+  "name": "fastfood-signup-lambda",
+  "version": "1.0.0",
+  "description": "Lambda para criação do usuário FIAP SOAT",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "mock": "ts-node src/mock.ts",
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.896.0",
+    "dotenv": "^17.2.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.114",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^18.19.127",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}
