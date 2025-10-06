@@ -9,6 +9,10 @@ STAGE_NAME="dev"
 SIGNUP_FUNCTION="fastfoodSignup"
 AUTH_FUNCTION="fastfoodAuth"
 
+# Buscar Account ID da conta AWS atual
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+echo "Account ID: $ACCOUNT_ID"
+
 echo "=== Criando API Gateway ==="
 
 
@@ -72,12 +76,24 @@ echo "ARNs das Lambdas - Signup: $SIGNUP_LAMBDA_ARN, Auth: $AUTH_LAMBDA_ARN"
 
 echo "Configurando permissões..."
 
+# Remover permissões antigas se existirem
+aws lambda remove-permission \
+  --function-name $SIGNUP_FUNCTION \
+  --statement-id "api-gateway-signup" \
+  --region $REGION 2>/dev/null || true
+
+aws lambda remove-permission \
+  --function-name $AUTH_FUNCTION \
+  --statement-id "api-gateway-auth" \
+  --region $REGION 2>/dev/null || true
+
+# Adicionar novas permissões
 aws lambda add-permission \
   --function-name $SIGNUP_FUNCTION \
   --statement-id "api-gateway-signup" \
   --action "lambda:InvokeFunction" \
   --principal "apigateway.amazonaws.com" \
-  --source-arn "arn:aws:execute-api:$REGION:*:$API_ID/*/*" \
+  --source-arn "arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/*" \
   --region $REGION
 
 aws lambda add-permission \
@@ -85,7 +101,7 @@ aws lambda add-permission \
   --statement-id "api-gateway-auth" \
   --action "lambda:InvokeFunction" \
   --principal "apigateway.amazonaws.com" \
-  --source-arn "arn:aws:execute-api:$REGION:*:$API_ID/*/*" \
+  --source-arn "arn:aws:execute-api:$REGION:$ACCOUNT_ID:$API_ID/*/*" \
   --region $REGION
 
 
@@ -133,6 +149,13 @@ aws apigateway put-integration \
 
 echo "Configurando CORS..."
 
+# Criar método OPTIONS para Signup
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $SIGNUP_RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE \
+  --region $REGION
 
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
@@ -158,6 +181,13 @@ aws apigateway put-integration-response \
   --response-parameters '{"method.response.header.Access-Control-Allow-Headers": "'\''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'\''","method.response.header.Access-Control-Allow-Methods": "'\''POST,OPTIONS'\''","method.response.header.Access-Control-Allow-Origin": "'\''*'\''"}' \
   --region $REGION
 
+# Criar método OPTIONS para Auth
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $AUTH_RESOURCE_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE \
+  --region $REGION
 
 aws apigateway put-method-response \
   --rest-api-id $API_ID \
