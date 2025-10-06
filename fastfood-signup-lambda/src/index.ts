@@ -13,7 +13,24 @@ export const handler = async (event: any) => {
       return { statusCode: 400, body: JSON.stringify({ error: "cpf, name e email são obrigatórios" }) };
     }
 
-    // Criar usuário no Cognito
+    const response = await fetch("http://localhost:3000/customers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        cpf
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao chamar a API: ${response.status}`);
+    }
+
+    const user = await response.json();
+
     await client.send(new AdminCreateUserCommand({
       UserPoolId: process.env.USER_POOL_ID!,
       Username: cpf,
@@ -25,10 +42,9 @@ export const handler = async (event: any) => {
       MessageAction: "SUPPRESS"
     }));
 
-    // Gerar token JWT
     const token = jwt.sign({ cpf, name, email }, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
-    return { statusCode: 200, body: JSON.stringify({ message: "Usuário criado", token }) };
+    return { statusCode: 200, body: JSON.stringify({ message: "Usuário criado", token, user }) };
 
   } catch (err: any) {
     console.error(err);

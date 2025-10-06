@@ -10,13 +10,26 @@ export const handler = async (event: any) => {
 
     if (!cpf) return { statusCode: 400, body: JSON.stringify({ error: "cpf é obrigatório" }) };
 
-    const user = await client.send(new AdminGetUserCommand({
+    const response = await fetch(`http://localhost:3000/customers/${cpf}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar usuário: ${response.status}`);
+    }
+
+    const user = await response.json();
+
+    const userAuth = await client.send(new AdminGetUserCommand({
       UserPoolId: process.env.USER_POOL_ID!,
       Username: cpf
     }));
 
     const attributes: Record<string, string> = {};
-    user.UserAttributes?.forEach(attr => {
+    userAuth.UserAttributes?.forEach(attr => {
       if (attr.Name !== undefined && attr.Value !== undefined) {
         attributes[attr.Name] = attr.Value;
       }
@@ -28,7 +41,7 @@ export const handler = async (event: any) => {
       email: attributes["email"]
     }, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
-    return { statusCode: 200, body: JSON.stringify({ message: "Autenticação bem-sucedida", token }) };
+    return { statusCode: 200, body: JSON.stringify({ message: "Autenticação bem-sucedida", token, user }) };
 
   } catch (err: any) {
     console.error(err);
