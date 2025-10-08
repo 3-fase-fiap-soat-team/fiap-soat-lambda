@@ -10,7 +10,7 @@ export const handler = async (event: any) => {
 
     if (!cpf) return { statusCode: 400, body: JSON.stringify({ error: "cpf é obrigatório" }) };
 
-    const response = await fetch(`http://localhost:3000/customers/${cpf}`, {
+    const response = await fetch(`http://ade6621a32ddf48fca0265fba9f0d4e8-959184e9a1d3d4fa.elb.us-east-1.amazonaws.com/customers/${cpf}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"

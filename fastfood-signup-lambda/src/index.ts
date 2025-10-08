@@ -13,7 +13,7 @@ export const handler = async (event: any) => {
       return { statusCode: 400, body: JSON.stringify({ error: "cpf, name e email são obrigatórios" }) };
     }
 
-    const response = await fetch("http://localhost:3000/customers", {
+    const response = await fetch("http://ade6621a32ddf48fca0265fba9f0d4e8-959184e9a1d3d4fa.elb.us-east-1.amazonaws.com/customers", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

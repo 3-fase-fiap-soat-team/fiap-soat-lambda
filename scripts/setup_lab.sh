@@ -7,7 +7,7 @@ SIGNUP_LAMBDA="fastfoodSignup"
 AUTH_LAMBDA="fastfoodAuth"
 JWT_SECRET="fiap2025grupo242"
 
-ROLE_ARN="arn:aws:iam::471112819787:role/LabRole"
+ROLE_ARN="arn:aws:iam::280273007505:role/LabRole"
 echo "Usando LabRole: $ROLE_ARN"
 
 echo "=== Criando User Pool ==="
