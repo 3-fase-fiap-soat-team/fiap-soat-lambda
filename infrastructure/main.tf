@@ -118,7 +118,7 @@ data "archive_file" "auth_zip" {
 resource "aws_lambda_function" "signup" {
   filename         = data.archive_file.signup_zip.output_path
   function_name    = "fastfoodSignup"
-  role            = "arn:aws:iam::905418273969:role/LabRole"
+  role            = "arn:aws:iam::280273007505:role/LabRole"
   handler         = "dist/index.handler"
   source_code_hash = data.archive_file.signup_zip.output_base64sha256
   runtime         = var.lambda_runtime
@@ -140,7 +140,7 @@ resource "aws_lambda_function" "signup" {
 resource "aws_lambda_function" "auth" {
   filename         = data.archive_file.auth_zip.output_path
   function_name    = "fastfoodAuth"
-  role            = "arn:aws:iam::905418273969:role/LabRole"
+  role            = "arn:aws:iam::280273007505:role/LabRole"
   handler         = "dist/index.handler"
   source_code_hash = data.archive_file.auth_zip.output_base64sha256
   runtime         = var.lambda_runtime
