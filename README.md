@@ -1,109 +1,166 @@
-# FIAP SOAT - Lambda Autenticação
+# 🍔 Fastfood Serverless Auth
 
-AWS Lambda para autenticação via CPF - Fase 3
+Este projeto contém a infraestrutura e o código das **Lambdas responsáveis pela autenticação de usuários** do sistema **Fastfood**, incluindo criação de contas e autenticação via **Amazon Cognito**.
+A infraestrutura é provisionada automaticamente com **Terraform**, e o pipeline de **GitHub Actions** cuida de build, empacotamento, upload e deploy das funções Lambda.
 
-## 🎯 **Objetivo**
-Implementar função serverless para autenticar clientes via CPF, integrada com sistema de autenticação JWT/Cognito.
+---
 
-## 👨‍💻 **Responsável**
-- **Dev 1 (MathLuchiari)** - Database + Lambda
-- **Repositórios:** `fiap-soat-database-terraform` + `fiap-soat-lambda`
-- **Foco:** RDS PostgreSQL + Autenticação via CPF
-- **Tecnologias:** Terraform, AWS Lambda, RDS, Node.js/TypeScript
+## 📁 Estrutura do Projeto
 
-## 📁 **Estrutura do Projeto**
 ```
-src/
-├── auth/              # Handlers de autenticação
-│   ├── handlers/      # Lambda handlers
-│   ├── models/        # Modelos de dados
-│   └── services/      # Lógica de negócio
-├── shared/            # Utilitários compartilhados
-│   ├── utils/         # Funções auxiliares
-│   └── validators/    # Validadores CPF/JWT
-tests/
-├── unit/              # Testes unitários
-└── integration/       # Testes de integração
-infrastructure/        # Configuração SAM/CloudFormation
+.
+├─ fastfood-signup-lambda/      # Lambda responsável por cadastro (signup)
+├─ fastfood-auth-lambda/        # Lambda responsável por autenticação (auth/login)
+├─ infrastructure/                   # Arquivos Terraform para provisionar a infraestrutura
+│  ├─ main.tf
+│  └─ terraform.tfvars
+└─ .github/workflows/deploy.yml # Pipeline de CI/CD com GitHub Actions
 ```
 
-## ⚙️ **Configuração AWS Academy**
-- **Região:** us-east-1
-- **Budget:** $50 USD (AWS Academy)
-- **Secrets:** Configurados na organização GitHub
-- **Terraform State:** S3 + DynamoDB locks
+---
 
-## 🚀 **Setup Local**
+## ☁️ Arquitetura da Solução
+
+A aplicação é composta pelos seguintes recursos AWS:
+
+* **Amazon Cognito User Pool** – Gerencia usuários, autenticação e atributos customizados (CPF, nome e email).
+* **User Pool Client** – Interface para as Lambdas interagirem com o Cognito.
+* **AWS Lambda - Signup** – Função para registrar novos usuários no Cognito.
+* **AWS Lambda - Auth** – Função para autenticar usuários e gerar tokens JWT.
+* **IAM Role para Lambda** – Permite que as funções se comuniquem com o Cognito.
+* **Terraform** – Provisiona todos os recursos de forma declarativa.
+* **GitHub Actions** – Automatiza build, upload e `terraform apply`.
+
+---
+
+## 🚀 Fluxo de Deploy Automatizado
+
+1. **Push para a branch `main`** dispara o workflow.
+2. O **GitHub Actions**:
+
+   * Instala dependências e compila os projetos Lambda (TypeScript → JS).
+3. **Terraform** é executado:
+
+   * Cria/atualiza o Cognito User Pool e App Client.
+   * Cria as funções Lambda com o código mais recente.
+   * Configura variáveis de ambiente automaticamente.
+4. Lambdas atualizadas são publicadas na AWS.
+
+---
+
+## 🛠️ Pré-requisitos
+
+* Node.js 18+
+* Terraform 1.5+
+* AWS CLI configurado (caso rode localmente)
+
+---
+
+## 🔑 Variáveis de Ambiente das Lambdas
+
+Cada Lambda utiliza as seguintes variáveis de ambiente:
+
+| Variável       | Descrição                                      |
+| -------------- | ---------------------------------------------- |
+| `USER_POOL_ID` | ID do User Pool criado no Cognito              |
+| `JWT_SECRET`   | Segredo usado para geração/validação de tokens |
+
+> ⚠️ O `USER_POOL_ID` é preenchido automaticamente pelo Terraform no momento do deploy.
+
+---
+
+## 🧪 Testando as Funções
+
+Você pode testar cada Lambda diretamente pelo **AWS Lambda Console** ou via **AWS CLI**.
+
+### Signup (Cadastro)
+
 ```bash
-# Clonar repositório
-git clone https://github.com/3-fase-fiap-soat-team/fiap-soat-lambda.git
-cd fiap-soat-lambda
-
-# Configurar Git
-git config user.name "MathLuchiari"
-git config user.email "seu-email@gmail.com"
-
-# Instalar dependências
-npm install
-
-# Configurar AWS CLI (se necessário)
-aws configure set region us-east-1
-
-# Executar testes
-npm run test
-npm run lint
+aws lambda invoke \
+  --function-name fastfoodSignup \
+  --payload '{"name":"João","email":"joao@email.com","cpf":"12345678901"}' \
+  response.json
+cat response.json
 ```
 
-## 🏗️ **Desenvolvimento**
-```bash
-# Executar testes
-npm run test
+### Auth (Login)
 
-# Build local
+```bash
+aws lambda invoke \
+  --function-name fastfoodAuth \
+  --payload '{"email":"joao@email.com","password":"minhasenha"}' \
+  response.json
+cat response.json
+```
+
+---
+
+## 🧰 Comandos Úteis
+
+### Inicializar Terraform (local)
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+### Remover toda a infraestrutura
+
+```bash
+terraform destroy
+```
+
+---
+
+## 📦 Estrutura de Build (Lambda)
+
+Cada função Lambda é compilada em JavaScript antes do empacotamento:
+
+```bash
+cd fastfood-signup-lambda
+npm ci
 npm run build
-
-# Deploy com SAM
-sam build
-sam deploy --guided  # Primeira vez
-sam deploy           # Próximas vezes
+zip -r signup.zip dist/
 ```
 
-## 🔐 **Secrets GitHub (Auto-configurados)**
-- `AWS_ACCESS_KEY_ID` - Chave de acesso AWS Academy
-- `AWS_SECRET_ACCESS_KEY` - Secret de acesso AWS Academy  
-- `AWS_SESSION_TOKEN` - Token de sessão AWS Academy
-- `AWS_REGION` - us-east-1
-- `TF_STATE_BUCKET` - Bucket S3 para Terraform state
-- `TF_STATE_LOCK_TABLE` - Tabela DynamoDB para locks
+> O mesmo processo se aplica à `fastfood-auth-lambda`.
 
-## 📋 **Requisitos da Fase 3**
-- ✅ Function serverless para autenticar cliente via CPF
-- ✅ Integração com sistema de autenticação (JWT/Cognito)
-- ✅ Cliente se identifica APENAS com CPF (sem senha)
-- ✅ Fluxo de integração usando JWT
-- ✅ Deploy automatizado via GitHub Actions
+---
 
-## 🔄 **Workflow de Desenvolvimento**
-1. **Branch:** `feature/[nome-da-feature]`
-2. **Desenvolvimento:** Implementar + testes
-3. **PR:** Solicitar review do team
-4. **CI/CD:** GitHub Actions executa testes
-5. **Deploy:** Automático após merge na main
+## 📊 Outputs Importantes (Terraform)
 
-## 🧪 **CI/CD Pipeline**
-- **Trigger:** Push na `main` ou `develop`
-- **Testes:** Jest + ESLint
-- **Deploy:** SAM para AWS Academy
-- **Notificação:** Slack/Teams (opcional)
+Após o `terraform apply`, você verá:
 
-## 📚 **Links Importantes**
-- **Organização:** https://github.com/3-fase-fiap-soat-team
-- **Secrets:** https://github.com/orgs/3-fase-fiap-soat-team/settings/secrets/actions
-- **Database Repo:** https://github.com/3-fase-fiap-soat-team/fiap-soat-database-terraform
-- **Planning:** [PLANO_TRABALHO_FASE3.md](../PLANO_TRABALHO_FASE3.md)
+| Output                | Descrição                      |
+| --------------------- | ------------------------------ |
+| `user_pool_id`        | ID do Cognito User Pool        |
+| `app_client_id`       | ID do App Client Cognito       |
+| `signup_lambda_arn`   | ARN da Lambda de cadastro      |
+| `auth_lambda_arn`     | ARN da Lambda de autenticação  |
+---
 
-## ⚠️ **Importante - AWS Academy**
-- **Budget limitado:** $50 USD total
-- **Credenciais temporárias:** Renovar quando expirar
-- **Monitorar custos:** AWS Cost Explorer
-- **Recursos mínimos:** Usar apenas o necessário
+## 🧼 Limpeza do Ambiente
+
+Para deletar tudo criado e validar o processo de criação do zero:
+
+```bash
+terraform destroy
+```
+
+Isso remove o User Pool, App Client, Lambdas e IAM Roles.
+
+---
+
+## 📚 Próximos Passos
+
+* Integrar as Lambdas ao **API Gateway** para expor endpoints REST.
+* Adicionar **Authorizer Cognito** para proteger rotas com JWT.
+* Criar um frontend que consuma o fluxo de signup/login.
+
+---
+
+## 👨‍💻 Autor
+
+**Fastfood Infra Team 🍔** – Infraestrutura serverless para autenticação escalável com AWS Lambda + Cognito + Terraform.
