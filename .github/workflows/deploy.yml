@@ -26,12 +26,13 @@ jobs:
           node-version: '18'
 
       # 3️⃣ Configurar AWS CLI
-      - name: 🔐 Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       # 4️⃣ Instalar Terraform
       - name: 🛠️ Instalar Terraform
