@@ -1,0 +1,14 @@
+API Gateway Information
+======================
+API ID: nlxpeaq6w0
+API URL: https://nlxpeaq6w0.execute-api.us-east-1.amazonaws.com/dev
+Region: us-east-1
+Stage: dev
+
+Endpoints:
+- POST https://nlxpeaq6w0.execute-api.us-east-1.amazonaws.com/dev/signup - Criar usuário
+- POST https://nlxpeaq6w0.execute-api.us-east-1.amazonaws.com/dev/auth - Autenticar usuário
+
+Lambda Functions:
+- Signup: fastfoodSignup (arn:aws:lambda:us-east-1:280273007505:function:fastfoodSignup)
+- Auth: fastfoodAuth (arn:aws:lambda:us-east-1:280273007505:function:fastfoodAuth)
